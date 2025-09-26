@@ -1,4 +1,5 @@
 OUTPUT_ARCH(riscv)
+# 整个程序的入口点是 _start
 ENTRY(_start)
 BASE_ADDRESS = 0x80200000;
 
