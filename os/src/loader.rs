@@ -63,6 +63,7 @@ pub fn get_num_app() -> usize {
 
 /// Load nth user app at
 /// [APP_BASE_ADDRESS + n * APP_SIZE_LIMIT, APP_BASE_ADDRESS + (n+1) * APP_SIZE_LIMIT).
+/// 在内核启动时，就将所有应用程序一并加载到内存
 pub fn load_apps() {
     extern "C" {
         fn _num_app();
@@ -72,8 +73,10 @@ pub fn load_apps() {
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
     // load apps
     for i in 0..num_app {
+        // 得到代码在内核地址空间中的起始地址
         let base_i = get_base_i(i);
         // clear region
+        // 操作了裸指针，所以用 unsafe
         (base_i..base_i + APP_SIZE_LIMIT)
             .for_each(|addr| unsafe { (addr as *mut u8).write_volatile(0) });
         // load app from data section to memory

@@ -20,17 +20,16 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
-#![feature(alloc_error_handler)]
+// #![feature(alloc_error_handler)]
 
 #[macro_use]
 extern crate log;
 
-extern crate alloc;
+// extern crate alloc;
 
 #[macro_use]
 mod console;
 pub mod config;
-mod heap_alloc;
 pub mod lang_items;
 mod loader;
 pub mod logging;
@@ -97,7 +96,7 @@ fn kernel_log_info() {
 pub fn rust_main() -> ! {
     clear_bss();
     kernel_log_info();
-    heap_alloc::init_heap();
+    // heap_alloc::init_heap();
     trap::init();
     loader::load_apps();
     trap::enable_timer_interrupt();

@@ -7,6 +7,7 @@
 .endm
     .section .text
     .globl __switch
+# 这里的保存和恢复，都是给了已有的两个 Task Context 的地址
 __switch:
     # __switch(
     #     current_task_cx_ptr: *mut TaskContext,

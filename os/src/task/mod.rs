@@ -14,6 +14,8 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
+use core::cell::RefMut;
+
 use crate::config::MAX_APP_NUM;
 use crate::loader::{get_num_app, init_app_cx};
 use crate::sync::UPSafeCell;
@@ -32,6 +34,8 @@ pub use context::TaskContext;
 /// Most of `TaskManager` are hidden behind the field `inner`, to defer
 /// borrowing checks to runtime. You can see examples on how to use `inner` in
 /// existing functions on `TaskManager`.
+
+// 全局任务管理器, inner 里保存一些可变内容
 pub struct TaskManager {
     /// total number of tasks
     num_app: usize,
@@ -42,9 +46,16 @@ pub struct TaskManager {
 /// Inner of Task Manager
 pub struct TaskManagerInner {
     /// task list
-    tasks: [TaskControlBlock; MAX_APP_NUM],
+    pub tasks: [TaskControlBlock; MAX_APP_NUM],
     /// id of current `Running` task
     current_task: usize,
+}
+
+impl TaskManagerInner {
+    /// get current_task from TaskManager
+    pub fn get_current_task(&self) -> usize {
+        self.current_task
+    }
 }
 
 lazy_static! {
@@ -54,6 +65,7 @@ lazy_static! {
         let mut tasks = [TaskControlBlock {
             task_cx: TaskContext::zero_init(),
             task_status: TaskStatus::UnInit,
+            syscalls: [0; 500]
         }; MAX_APP_NUM];
         for (i, task) in tasks.iter_mut().enumerate() {
             task.task_cx = TaskContext::goto_restore(init_app_cx(i));
@@ -134,6 +146,11 @@ impl TaskManager {
         } else {
             panic!("All applications completed!");
         }
+    }
+
+    /// get inner exclusive_access
+    pub fn get_inner(&self) -> RefMut<'_, TaskManagerInner> {
+        self.inner.exclusive_access()
     }
 }
 
