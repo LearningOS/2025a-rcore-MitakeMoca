@@ -99,17 +99,21 @@ impl AppManager {
     }
 }
 
+// 只初始化一个，全局可用的静态变量，而且这个初始化可以是复杂的运行时逻辑
 lazy_static! {
     static ref APP_MANAGER: UPSafeCell<AppManager> = unsafe {
         UPSafeCell::new({
             extern "C" {
                 fn _num_app();
             }
+            // 这一步的原因是 i32 不能直接转换为指针，只有 isize 或者 usize 能转化为指针类型
             let num_app_ptr = _num_app as usize as *const usize;
             let num_app = num_app_ptr.read_volatile();
             let mut app_start: [usize; MAX_APP_NUM + 1] = [0; MAX_APP_NUM + 1];
+            // from_raw_parts: 将裸指针 + 长度转换为不可变切片
             let app_start_raw: &[usize] =
                 core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1);
+            // 每个程序的起始地址
             app_start[..=num_app].copy_from_slice(app_start_raw);
             AppManager {
                 num_app,
@@ -145,8 +149,10 @@ pub fn run_next_app() -> ! {
         fn __restore(cx_addr: usize);
     }
     unsafe {
+        // 压入一个虚拟的上下文
         __restore(KERNEL_STACK.push_context(TrapContext::app_init_context(
             APP_BASE_ADDRESS,
+            // 通过这一步，后续就能将 sscratch 指向用户栈
             USER_STACK.get_sp(),
         )) as *const _ as usize);
     }
