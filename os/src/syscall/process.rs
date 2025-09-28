@@ -138,8 +138,7 @@ pub fn sys_mmap(_start: usize, _len: usize, _port: usize) -> isize {
 
     TASK_MANAGER.get_inner().tasks[num]
         .memory_set
-        .insert_framed_area(_start.into(), end.into(), perm);
-    println!("zhouzhou");
+        .insert_framed_area(_start.into(), (end + 1).into(), perm);
     0
 }
 
