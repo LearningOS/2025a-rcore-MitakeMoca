@@ -14,6 +14,8 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
+use core::cell::RefMut;
+
 use crate::loader::{get_app_data, get_num_app};
 use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
@@ -41,11 +43,18 @@ pub struct TaskManager {
 }
 
 /// The task manager inner in 'UPSafeCell'
-struct TaskManagerInner {
+pub struct TaskManagerInner {
     /// task list
-    tasks: Vec<TaskControlBlock>,
+    pub tasks: Vec<TaskControlBlock>,
     /// id of current `Running` task
     current_task: usize,
+}
+
+impl TaskManagerInner {
+    /// get current task
+    pub fn get_current_task(&self) -> usize {
+        self.current_task
+    }
 }
 
 lazy_static! {
@@ -152,6 +161,11 @@ impl TaskManager {
         } else {
             panic!("All applications completed!");
         }
+    }
+
+    /// get inner exclusive_access
+    pub fn get_inner(&self) -> RefMut<'_, TaskManagerInner> {
+        self.inner.exclusive_access()
     }
 }
 

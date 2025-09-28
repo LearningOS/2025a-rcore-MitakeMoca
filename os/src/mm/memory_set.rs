@@ -35,7 +35,9 @@ lazy_static! {
 }
 /// address space
 pub struct MemorySet {
+    /// page_table 保存了所有页表的物理页帧
     page_table: PageTable,
+    /// areas 则保存了所有存真实数据的物理页帧
     areas: Vec<MapArea>,
 }
 
