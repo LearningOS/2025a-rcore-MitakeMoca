@@ -270,4 +270,5 @@ where
     }
 }
 /// a simple range structure for virtual page number
+/// VPNRange 也是根据 l 和 r 左闭右开的
 pub type VPNRange = SimpleRange<VirtPageNum>;
