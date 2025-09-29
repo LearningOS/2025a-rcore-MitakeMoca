@@ -356,6 +356,9 @@ impl MapArea {
     }
     pub fn map(&mut self, page_table: &mut PageTable) {
         for vpn in self.vpn_range {
+            if self.vpn_range.get_start() == 65536.into() {
+                println!("map vpn {}", vpn.0);
+            }
             self.map_one(page_table, vpn);
         }
     }

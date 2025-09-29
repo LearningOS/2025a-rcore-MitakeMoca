@@ -146,14 +146,15 @@ pub fn sys_mmap(_start: usize, _len: usize, _port: usize) -> isize {
     let end_page = end / PAGE_SIZE;
     let page_table = PageTable::from_token(current_user_token());
     for i in start_page..end_page + 1 {
+        println!("try to map {}", i);
         if let Some(_x) = page_table.find_pte(i.into()) {
+            println!("No");
             return -1;
         };
     }
     let mut num = current_task().unwrap();
     let perm = MapPermission::from_bits((_port << 1 | (1 << 4)) as u8).unwrap();
-    Arc::get_mut(&mut num)
-        .unwrap()
+    Arc::clone(&mut num)
         .inner_exclusive_access()
         .memory_set
         .insert_framed_area(_start.into(), (end + 1).into(), perm);
@@ -200,8 +201,8 @@ pub fn sys_spawn(_path: *const u8) -> isize {
         let tem = Arc::from(TaskControlBlock::new(data));
         tem.inner_exclusive_access().parent = Some(Arc::downgrade(&task));
         task.inner_exclusive_access().children.push(tem.clone());
-        add_task(tem);
-        0
+        add_task(Arc::clone(&tem));
+        Arc::as_ref(&tem).pid.0 as isize
     } else {
         -1
     }
