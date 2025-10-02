@@ -1,5 +1,7 @@
 //! File and filesystem-related syscalls
-use crate::fs::{open_file, OpenFlags, Stat};
+use core::mem;
+
+use crate::fs::{open_file, InodeType, OSInode, OpenFlags, Stat, StatMode, ROOT_INODE};
 use crate::mm::{translated_byte_buffer, translated_str, UserBuffer};
 use crate::task::{current_task, current_user_token};
 
@@ -76,28 +78,54 @@ pub fn sys_close(fd: usize) -> isize {
 }
 
 /// YOUR JOB: Implement fstat.
+/// 千万别忘了，传进来的这个 _st 是一个用户态的虚拟地址，所以要先地址转换
 pub fn sys_fstat(_fd: usize, _st: *mut Stat) -> isize {
-    trace!(
-        "kernel:pid[{}] sys_fstat NOT IMPLEMENTED",
-        current_task().unwrap().pid.0
-    );
-    -1
+    let st: &mut &'static mut [u8] = &mut translated_byte_buffer(
+        current_user_token(),
+        _st as *const u8,
+        mem::size_of::<Stat>(),
+    )[0];
+    let raw_ptr = st.as_mut_ptr();
+    let st = raw_ptr as *mut Stat;
+    unsafe {
+        (*st).dev = 0;
+        let ff = current_task().unwrap().inner_exclusive_access().fd_table[_fd]
+            .clone()
+            .unwrap();
+        let ff = ff.as_any();
+        if let Some(inode) = ff.downcast_ref::<OSInode>() {
+            let inner = inode.inner.exclusive_access();
+            (*st).ino = inner.inode.get_ino();
+            println!("zhouzhou");
+            match inode.inode_type {
+                InodeType::File => (*st).mode = StatMode::FILE,
+                InodeType::Dir => (*st).mode = StatMode::DIR,
+                _ => (*st).mode = StatMode::NULL,
+            }
+            (*st).nlink = ROOT_INODE.count_link((*st).ino as u32);
+        }
+    }
+    0
 }
 
 /// YOUR JOB: Implement linkat.
 pub fn sys_linkat(_old_name: *const u8, _new_name: *const u8) -> isize {
-    trace!(
-        "kernel:pid[{}] sys_linkat NOT IMPLEMENTED",
-        current_task().unwrap().pid.0
-    );
-    -1
+    let token = current_user_token();
+    let old_name = translated_str(token, _old_name);
+    let new_name = translated_str(token, _new_name);
+    if old_name == new_name {
+        return -1;
+    }
+    let inode_id = ROOT_INODE
+        .read_disk_inode(|disk_inode| ROOT_INODE.find_inode_id(&old_name, disk_inode))
+        .unwrap();
+    ROOT_INODE.link_at(inode_id, &new_name);
+    0
 }
 
 /// YOUR JOB: Implement unlinkat.
 pub fn sys_unlinkat(_name: *const u8) -> isize {
-    trace!(
-        "kernel:pid[{}] sys_unlinkat NOT IMPLEMENTED",
-        current_task().unwrap().pid.0
-    );
-    -1
+    let token = current_user_token();
+    let name = translated_str(token, _name);
+    ROOT_INODE.unlink(&name)
 }

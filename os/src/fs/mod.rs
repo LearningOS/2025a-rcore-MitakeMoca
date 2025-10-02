@@ -3,10 +3,13 @@
 mod inode;
 mod stdio;
 
+use core::any::Any;
+
 use crate::mm::UserBuffer;
+pub use inode::{InodeType, ROOT_INODE};
 
 /// trait File for all file types
-pub trait File: Send + Sync {
+pub trait File: Send + Sync + Any {
     /// the file readable?
     fn readable(&self) -> bool;
     /// the file writable?
@@ -15,6 +18,8 @@ pub trait File: Send + Sync {
     fn read(&self, buf: UserBuffer) -> usize;
     /// write to the file from buf, return the number of bytes written
     fn write(&self, buf: UserBuffer) -> usize;
+    /// trans File into other type
+    fn as_any(&self) -> &dyn Any;
 }
 
 /// The stat of a inode
