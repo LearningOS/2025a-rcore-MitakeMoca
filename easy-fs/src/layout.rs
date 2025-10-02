@@ -24,10 +24,15 @@ const INDIRECT2_BOUND: usize = INDIRECT1_BOUND + INODE_INDIRECT2_COUNT;
 #[repr(C)]
 pub struct SuperBlock {
     magic: u32,
+    /// total blocks
     pub total_blocks: u32,
+    /// total blocks
     pub inode_bitmap_blocks: u32,
+    /// total blocks
     pub inode_area_blocks: u32,
+    /// total blocks
     pub data_bitmap_blocks: u32,
+    /// total blocks
     pub data_area_blocks: u32,
 }
 
@@ -70,7 +75,9 @@ impl SuperBlock {
 /// Type of a disk inode
 #[derive(PartialEq)]
 pub enum DiskInodeType {
+    /// total blocks
     File,
+    /// total blocks
     Directory,
 }
 
@@ -81,9 +88,13 @@ type DataBlock = [u8; BLOCK_SZ];
 /// A disk inode
 #[repr(C)]
 pub struct DiskInode {
+    /// total blocks
     pub size: u32,
+    /// total blocks
     pub direct: [u32; INODE_DIRECT_COUNT],
+    /// total blocks
     pub indirect1: u32,
+    /// total blocks
     pub indirect2: u32,
     type_: DiskInodeType,
 }
