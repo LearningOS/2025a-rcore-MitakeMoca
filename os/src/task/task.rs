@@ -5,6 +5,7 @@ use super::{kstack_alloc, KernelStack, ProcessControlBlock, TaskContext};
 use crate::trap::TrapContext;
 use crate::{mm::PhysPageNum, sync::UPSafeCell};
 use alloc::sync::{Arc, Weak};
+use alloc::vec::Vec;
 use core::cell::RefMut;
 
 /// Task control block structure
@@ -65,6 +66,36 @@ impl TaskControlBlock {
         let trap_cx_ppn = res.trap_cx_ppn();
         let kstack = kstack_alloc();
         let kstack_top = kstack.get_top();
+        let mut process_inner = process.inner_exclusive_access();
+        let n = process_inner.mutex_alloc.len();
+        let m = process_inner.mutex_available.len();
+        if n <= res.tid {
+            process_inner.mutex_alloc.push(Vec::new());
+            process_inner.mutex_need.push(Vec::new());
+            for _i in 0..m {
+                process_inner.mutex_alloc[res.tid].push(0);
+                process_inner.mutex_need[res.tid].push(0);
+            }
+        } else {
+            for i in 0..m {
+                process_inner.mutex_alloc[res.tid][i] = 0;
+                process_inner.mutex_need[res.tid][i] = 0;
+            }
+        }
+        let m = process_inner.sem_available.len();
+        if n <= res.tid {
+            process_inner.sem_alloc.push(Vec::new());
+            process_inner.sem_need.push(Vec::new());
+            for _i in 0..m {
+                process_inner.sem_alloc[res.tid].push(0);
+                process_inner.sem_need[res.tid].push(0);
+            }
+        } else {
+            for i in 0..m {
+                process_inner.sem_alloc[res.tid][i] = 0;
+                process_inner.sem_need[res.tid][i] = 0;
+            }
+        }
         Self {
             process: Arc::downgrade(&process),
             kstack,

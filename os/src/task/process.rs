@@ -49,6 +49,20 @@ pub struct ProcessControlBlockInner {
     pub semaphore_list: Vec<Option<Arc<Semaphore>>>,
     /// condvar list
     pub condvar_list: Vec<Option<Arc<Condvar>>>,
+    /// detect deadlock
+    pub detect_deadlock: bool,
+    /// mutex available
+    pub mutex_available: Vec<i32>,
+    /// mutex Alloc
+    pub mutex_alloc: Vec<Vec<i32>>,
+    /// mutex need
+    pub mutex_need: Vec<Vec<i32>>,
+    /// sem available
+    pub sem_available: Vec<i32>,
+    /// sem alloc
+    pub sem_alloc: Vec<Vec<i32>>,
+    /// sem need
+    pub sem_need: Vec<Vec<i32>>,
 }
 
 impl ProcessControlBlockInner {
@@ -81,6 +95,11 @@ impl ProcessControlBlockInner {
     /// get a task with tid in this process
     pub fn get_task(&self, tid: usize) -> Arc<TaskControlBlock> {
         self.tasks[tid].as_ref().unwrap().clone()
+    }
+
+    /// get detect deadlock
+    pub fn get_detect_deadlock(&self) -> bool {
+        self.detect_deadlock
     }
 }
 
@@ -119,6 +138,13 @@ impl ProcessControlBlock {
                     mutex_list: Vec::new(),
                     semaphore_list: Vec::new(),
                     condvar_list: Vec::new(),
+                    detect_deadlock: false,
+                    mutex_available: Vec::new(),
+                    mutex_alloc: Vec::new(),
+                    mutex_need: Vec::new(),
+                    sem_available: Vec::new(),
+                    sem_alloc: Vec::new(),
+                    sem_need: Vec::new(),
                 })
             },
         });
@@ -245,6 +271,13 @@ impl ProcessControlBlock {
                     mutex_list: Vec::new(),
                     semaphore_list: Vec::new(),
                     condvar_list: Vec::new(),
+                    detect_deadlock: parent.get_detect_deadlock(),
+                    mutex_available: Vec::new(),
+                    mutex_alloc: Vec::new(),
+                    mutex_need: Vec::new(),
+                    sem_available: Vec::new(),
+                    sem_alloc: Vec::new(),
+                    sem_need: Vec::new(),
                 })
             },
         });
