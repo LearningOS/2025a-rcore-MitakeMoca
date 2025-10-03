@@ -100,7 +100,6 @@ impl MutexBlocking {
     /// Create a new blocking mutex
     pub fn new(mutex_id: usize) -> Self {
         trace!("kernel: MutexBlocking::new");
-        println!("kernel: MutexBlocking::new {}", mutex_id);
         Self {
             mutex_id,
             inner: unsafe {
@@ -133,7 +132,6 @@ impl Mutex for MutexBlocking {
             let process = current_process();
             let mut process_inner = process.inner_exclusive_access();
             let mutex_id = self.mutex_id;
-            println!("{} {} mutexblocking", tid, mutex_id);
             process_inner.mutex_alloc[tid][mutex_id] += 1;
             process_inner.mutex_need[tid][mutex_id] -= 1;
             process_inner.mutex_available[mutex_id] -= 1;

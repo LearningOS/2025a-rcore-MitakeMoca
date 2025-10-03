@@ -83,7 +83,6 @@ impl Semaphore {
             let process = current_process();
             let mut process_inner = process.inner_exclusive_access();
             let sem_id = self.sem_id;
-            println!("{} {} sem", tid, sem_id);
             process_inner.sem_alloc[tid][sem_id] += 1;
             process_inner.sem_need[tid][sem_id] -= 1;
             process_inner.sem_available[sem_id] -= 1;
